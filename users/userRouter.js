@@ -16,7 +16,17 @@ router.post('/', validateUser, (req, res) => {
         });
 });
 
-router.post('/:id/posts', (req, res) => {});
+router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
+    const newPost = req.body;
+
+    db.insert(newPost)
+        .then(post => {
+            res.status(201).json(post);
+        })
+        .catch(error => {
+            res.status(500).json({ error: error, message: 'There was a server error while attempting to add post' });
+        });
+});
 
 router.get('/', (req, res) => {
     db.get()
@@ -95,6 +105,16 @@ function validateUser(req, res, next) {
     }
 }
 
-function validatePost(req, res, next) {}
+function validatePost(req, res, next) {
+    if (Object.keys(req.body).length === 0 && req.body.constructor === Object) {
+        res.status(400).json({ message: 'missing post data' });
+    }
+
+    if (req.body.text) {
+        next();
+    } else {
+        res.status(400).json({ message: 'missing required text field' });
+    }
+}
 
 module.exports = router;
